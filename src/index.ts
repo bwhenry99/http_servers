@@ -1,4 +1,11 @@
 import express from "express";
 
+const PORT = 8080;
+
 const app = express();
-app.listen(8080);
+
+app.use(express.static("."));
+
+app.listen(PORT, () => {
+  console.log(`Server is running at http://localhost:${PORT}`);
+});
