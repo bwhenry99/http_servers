@@ -1,5 +1,6 @@
 import express from "express";
 import {Request, Response} from "express";
+import {middlewareLogResponses} from "./middlewareLogResponses.js"
 
 const handlerReadiness = (req: Request, res: Response) => 
 {
@@ -10,7 +11,7 @@ const handlerReadiness = (req: Request, res: Response) =>
 const PORT = 8080;
 
 const app = express();
-
+app.use(middlewareLogResponses);
 app.use("/app", express.static("./src/app/"));
 app.get("/healthz", handlerReadiness);
 
