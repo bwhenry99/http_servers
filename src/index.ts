@@ -11,8 +11,15 @@ const handlerReadiness = (req: Request, res: Response) =>
 
 const hanlderMetrics = (req: Request, res: Response) =>
 {
-    res.set({"Content-Type" : 'text/plain'});
-    res.status(200).send(`Hits: ${api_config.fileserverHits}`);
+    res.set({"Content-Type" : 'text/html'});
+    res.status(200).send(
+    `<html>
+    <body>
+        <h1>Welcome, Chirpy Admin</h1>
+        <p>Chirpy has been visited ${api_config.fileserverHits} times!</p>
+    </body>
+    </html>`
+    );
 }
 
 const handlerReset = (req: Request, res: Response) =>
@@ -27,9 +34,9 @@ const app = express();
 
 app.use(middlewareLogResponses);
 app.use("/app", milddlewareMetrics, express.static("./src/app/"));
-app.get("/healthz", handlerReadiness);
-app.get("/metrics", hanlderMetrics);
-app.get("/reset", handlerReset);
+app.get("/api/healthz", handlerReadiness);
+app.get("/admin/metrics", hanlderMetrics);
+app.get("/admin/reset", handlerReset);
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);
