@@ -2,6 +2,7 @@ import {Request, response, Response} from "express";
 import { api_config } from "./config.js";
 import { Cipheriv } from "node:crypto";
 import { stringify } from "node:querystring";
+import * as errorTypes from "./errorTypes.js"
 
 export const handlerReadiness = (req: Request, res: Response) => 
 {
@@ -41,9 +42,10 @@ export const handlerValidate = (req: Request, res:Response) =>
     const chirp: parameters = req.body;
     if(chirp.body.length > 140)
     {
-        const my_error: errorResponse = {error: "Chirp is too long"};
-        res.header("Content-Type", 'application/json');
-        res.status(400).send(JSON.stringify(my_error));
+        //const my_error: errorResponse = {error: "Chirp is too long"};
+        //res.header("Content-Type", 'application/json');
+        //res.status(400).send(JSON.stringify(my_error));
+        throw new errorTypes.BadRequestError("Chirp is too long. Max length is 140");
     }
     else
     {
