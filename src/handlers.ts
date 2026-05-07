@@ -34,32 +34,20 @@ export const handlerValidate = (req: Request, res:Response) =>
         error: string;
     };
 
-    let body: string = "";
-    req.on("data", (chunk) => {
-        body += chunk;
-    });
+    type parameters = {
+        body: string;
+    };
 
-    req.on("end", () => {
-        try
-        {
-            const chirp = JSON.parse(body);
-            if(chirp.body.length > 140)
-            {
-                const my_error: errorResponse = {error: "Chirp is too long"};
-                res.header("Content-Type", 'application/json');
-                res.status(400).send(JSON.stringify(my_error));
-            }
-            else
-            {
-                res.header("Content-Type", 'application/json');
-                res.status(200).send(JSON.stringify({"valid": true}));
-            }
-
-        } catch(error)
-        {
-            const my_error: errorResponse = {error: "Cannot read chirp"};
-            res.header("Content-Type", 'application/json');
-            res.status(400).send(JSON.stringify(my_error))
-        }
-    });
+    const chirp: parameters = req.body;
+    if(chirp.body.length > 140)
+    {
+        const my_error: errorResponse = {error: "Chirp is too long"};
+        res.header("Content-Type", 'application/json');
+        res.status(400).send(JSON.stringify(my_error));
+    }
+    else
+    {
+        res.header("Content-Type", 'application/json');
+        res.status(200).send(JSON.stringify({"valid": true}));
+    }
 }
