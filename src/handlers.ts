@@ -1,5 +1,5 @@
 import {Request, response, Response} from "express";
-import { api_config } from "./config.js";
+import { config } from "./config.js";
 import { Cipheriv } from "node:crypto";
 import { stringify } from "node:querystring";
 import * as errorTypes from "./errorTypes.js"
@@ -17,7 +17,7 @@ export const hanlderMetrics = (req: Request, res: Response) =>
     `<html>
     <body>
         <h1>Welcome, Chirpy Admin</h1>
-        <p>Chirpy has been visited ${api_config.fileserverHits} times!</p>
+        <p>Chirpy has been visited ${config.fileserverHits} times!</p>
     </body>
     </html>`
     );
@@ -25,7 +25,7 @@ export const hanlderMetrics = (req: Request, res: Response) =>
 
 export const handlerReset = (req: Request, res: Response) =>
 {
-    api_config.fileserverHits = 0;
+    config.fileserverHits = 0;
     res.send("reset");
 }
 
