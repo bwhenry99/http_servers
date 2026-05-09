@@ -28,7 +28,11 @@ app.post("/admin/reset", (req, res, next) => {
 });
 
 app.post("/api/users", (req, res, next) => {
-  Promise.resolve(handlers.handlerUser(req, res)).catch(next);
+  Promise.resolve(handlers.handlerNewUser(req, res)).catch(next);
+});
+
+app.post("/api/login", (req, res, next) => {
+  Promise.resolve(handlers.hanlderLogin(req, res)).catch(next);
 });
 
 app.post("/api/chirps", (req, res, next) => {

@@ -28,7 +28,7 @@ export async function middlewareError(err: Error, req: Request, res: Response, n
     } 
     else if (err instanceof errorTypes.UnauthorizedError) {
         res.header("Content-Type", 'application/json');
-        res.status(401).send(JSON.stringify({error: "Unauthorized"}));
+        res.status(401).send(JSON.stringify({error: err.message}));
     } 
     else if (err instanceof errorTypes.ForbiddenError) {
         res.header("Content-Type", 'application/json');

@@ -1,10 +1,23 @@
 import {Request, response, Response} from "express";
 import { config } from "./config.js";
 import * as errorTypes from "./errorTypes.js"
-import { createUser } from "./db/queries/users.js";
+import { createUser, getUser } from "./db/queries/users.js";
 import * as tables from "./db/schema.js";
 import { db } from "./db/index.js";
 import { createChirp, getChirps, getChirp } from "./db/queries/chirps.js";
+import * as argon2 from "argon2";
+
+type returnUser = Omit<tables.NewUser, "hashed_password">
+function scrubPassword(user:tables.NewUser): returnUser
+{
+    const retUser: returnUser = {
+        "id": user.id,
+        "email": user.email,
+        "createdAt": user.createdAt,
+        "updatedAt": user.updatedAt
+    }
+    return retUser;
+}
 
 export const handlerReadiness = (req: Request, res: Response) => 
 {
@@ -102,19 +115,51 @@ export async function handlerGetChirp(req: Request, res: Response)
 
 }
 
-export async function handlerUser(req: Request, res:Response) 
+export async function handlerNewUser(req: Request, res:Response) 
 {    
     type parameters = {
+        password: string;
         email: string;
     };
 
     const registration: parameters = req.body;
 
-    if(registration.email)
+    if(registration.email && registration.password)
     {
-        const usertoAdd: tables.NewUser = {"email": registration.email};
+        const hashed_password = await argon2.hash(registration.password)
+        const usertoAdd: tables.NewUser = {"email": registration.email, "hashed_password": hashed_password};
         const user = await createUser(usertoAdd)
         res.header("Content-Type", 'application/json');
-        res.status(201).send(user);
+        res.status(201).send(scrubPassword(user));
+    }
+    else{
+        throw errorTypes.BadRequestError;
+    }
+}
+
+export async function hanlderLogin(req: Request, res:Response) 
+{    
+    type parameters = {
+        password: string;
+        email: string;
+    };
+
+    const login: parameters = req.body;
+
+    if(login.email && login.password)
+    {
+        const user = await getUser(login.email);
+        if(!user)
+            throw new errorTypes.UnauthorizedError("incorrect email or password");
+        
+        const success = await argon2.verify(user["hashed_password"], login.password)
+        if(!success)
+            throw new errorTypes.UnauthorizedError("incorrect email or password");
+
+        res.header("Content-Type", 'application/json');
+        res.status(200).send(scrubPassword(user));
+    }
+    else{
+        throw errorTypes.BadRequestError;
     }
 }
