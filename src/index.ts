@@ -7,7 +7,7 @@ import * as handlers from "./handlers.js"
 import { config } from "./config.js";
 
 const migrationClient = postgres(config.dbConfig.dbURL, { max: 1 });
-//await migrate(drizzle(migrationClient), config.dbConfig.migrationConfig);
+await migrate(drizzle(migrationClient), config.dbConfig.migrationConfig);
 
 const PORT = 8080;
 
@@ -27,12 +27,12 @@ app.post("/admin/reset", (req, res, next) => {
   Promise.resolve(handlers.handlerReset(req, res)).catch(next);
 });
 
-app.post("/api/validate_chirp", (req, res, next) => {
-  Promise.resolve(handlers.handlerValidate(req, res)).catch(next);
-});
-
 app.post("/api/users", (req, res, next) => {
   Promise.resolve(handlers.handlerUser(req, res)).catch(next);
+});
+
+app.post("/api/chirps", (req, res, next) => {
+  Promise.resolve(handlers.handlerChirp(req, res)).catch(next);
 });
 
 app.use(middlewareError);

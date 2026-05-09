@@ -2,8 +2,9 @@ import {Request, response, Response} from "express";
 import { config } from "./config.js";
 import * as errorTypes from "./errorTypes.js"
 import { createUser } from "./db/queries/users.js";
-import { NewUser, users } from "./db/schema.js";
+import * as tables from "./db/schema.js";
 import { db } from "./db/index.js";
+import { createChirp } from "./db/queries/chirps.js";
 
 export const handlerReadiness = (req: Request, res: Response) => 
 {
@@ -30,26 +31,21 @@ export async function handlerReset(req: Request, res: Response)
         throw errorTypes.ForbiddenError;
 
     config.fileserverHits = 0;
-    await db.delete(users);
+    await db.delete(tables.users);
     res.send("reset");
 }
 
-export const handlerValidate = (req: Request, res:Response) =>
+export async function handlerChirp(req: Request, res:Response) 
 {
-    type errorResponse = {
-        error: string;
-    };
-
     type parameters = {
         body: string;
+        userId: string;
     };
 
     const chirp: parameters = req.body;
+    console.log(chirp);
     if(chirp.body.length > 140)
     {
-        //const my_error: errorResponse = {error: "Chirp is too long"};
-        //res.header("Content-Type", 'application/json');
-        //res.status(400).send(JSON.stringify(my_error));
         throw new errorTypes.BadRequestError("Chirp is too long. Max length is 140");
     }
     else
@@ -65,8 +61,13 @@ export const handlerValidate = (req: Request, res:Response) =>
 
         const clean_body = words.join(" ");
 
-        res.header("Content-Type", 'application/json');
-        res.status(200).send(JSON.stringify({"cleanedBody": clean_body}));
+        if(chirp.body && chirp.userId)
+        {
+            const newChirp: tables.NewChirp = {"body": clean_body, "userId": chirp.userId};
+            const added = await createChirp(newChirp);
+            res.header("Content-Type", 'application/json');
+            res.status(201).send(added);
+        }
     }
 }
 
@@ -80,9 +81,8 @@ export async function handlerUser(req: Request, res:Response)
 
     if(registration.email)
     {
-        const usertoAdd: NewUser = {"email": registration.email};
+        const usertoAdd: tables.NewUser = {"email": registration.email};
         const user = await createUser(usertoAdd)
-        console.log(user);
         res.header("Content-Type", 'application/json');
         res.status(201).send(user);
     }
