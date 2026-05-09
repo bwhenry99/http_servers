@@ -4,7 +4,7 @@ import * as errorTypes from "./errorTypes.js"
 import { createUser } from "./db/queries/users.js";
 import * as tables from "./db/schema.js";
 import { db } from "./db/index.js";
-import { createChirp } from "./db/queries/chirps.js";
+import { createChirp, getChirps } from "./db/queries/chirps.js";
 
 export const handlerReadiness = (req: Request, res: Response) => 
 {
@@ -35,7 +35,7 @@ export async function handlerReset(req: Request, res: Response)
     res.send("reset");
 }
 
-export async function handlerChirp(req: Request, res:Response) 
+export async function handlerAddChirp(req: Request, res:Response) 
 {
     type parameters = {
         body: string;
@@ -43,7 +43,6 @@ export async function handlerChirp(req: Request, res:Response)
     };
 
     const chirp: parameters = req.body;
-    console.log(chirp);
     if(chirp.body.length > 140)
     {
         throw new errorTypes.BadRequestError("Chirp is too long. Max length is 140");
@@ -70,6 +69,14 @@ export async function handlerChirp(req: Request, res:Response)
         }
     }
 }
+
+export async function handlerGetChirps(req: Request, res: Response)
+{
+    const allChirps = await getChirps();
+    res.header("Content-Type", 'application/json');
+    res.status(200).send(allChirps);
+}
+
 
 export async function handlerUser(req: Request, res:Response) 
 {    

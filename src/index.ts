@@ -32,7 +32,11 @@ app.post("/api/users", (req, res, next) => {
 });
 
 app.post("/api/chirps", (req, res, next) => {
-  Promise.resolve(handlers.handlerChirp(req, res)).catch(next);
+  Promise.resolve(handlers.handlerAddChirp(req, res)).catch(next);
+});
+
+app.get("/api/chirps", (req, res, next) => {
+  Promise.resolve(handlers.handlerGetChirps(req, res)).catch(next);
 });
 
 app.use(middlewareError);
