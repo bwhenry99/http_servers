@@ -1,8 +1,9 @@
 import {Request, response, Response} from "express";
 import { config } from "./config.js";
-import { Cipheriv } from "node:crypto";
-import { stringify } from "node:querystring";
 import * as errorTypes from "./errorTypes.js"
+import { createUser } from "./db/queries/users.js";
+import { NewUser, users } from "./db/schema.js";
+import { db } from "./db/index.js";
 
 export const handlerReadiness = (req: Request, res: Response) => 
 {
@@ -23,9 +24,13 @@ export const hanlderMetrics = (req: Request, res: Response) =>
     );
 }
 
-export const handlerReset = (req: Request, res: Response) =>
+export async function handlerReset(req: Request, res: Response) 
 {
+    if(config.platform != "dev")
+        throw errorTypes.ForbiddenError;
+
     config.fileserverHits = 0;
+    await db.delete(users);
     res.send("reset");
 }
 
@@ -62,5 +67,23 @@ export const handlerValidate = (req: Request, res:Response) =>
 
         res.header("Content-Type", 'application/json');
         res.status(200).send(JSON.stringify({"cleanedBody": clean_body}));
+    }
+}
+
+export async function handlerUser(req: Request, res:Response) 
+{    
+    type parameters = {
+        email: string;
+    };
+
+    const registration: parameters = req.body;
+
+    if(registration.email)
+    {
+        const usertoAdd: NewUser = {"email": registration.email};
+        const user = await createUser(usertoAdd)
+        console.log(user);
+        res.header("Content-Type", 'application/json');
+        res.status(201).send(user);
     }
 }
