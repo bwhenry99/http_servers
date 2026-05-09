@@ -4,7 +4,7 @@ import * as errorTypes from "./errorTypes.js"
 import { createUser } from "./db/queries/users.js";
 import * as tables from "./db/schema.js";
 import { db } from "./db/index.js";
-import { createChirp, getChirps } from "./db/queries/chirps.js";
+import { createChirp, getChirps, getChirp } from "./db/queries/chirps.js";
 
 export const handlerReadiness = (req: Request, res: Response) => 
 {
@@ -77,6 +77,30 @@ export async function handlerGetChirps(req: Request, res: Response)
     res.status(200).send(allChirps);
 }
 
+export async function handlerGetChirp(req: Request, res: Response)
+{
+    if(!req.params.chirpId)
+        throw errorTypes.BadRequestError;
+
+    if(typeof(req.params.chirpId) == "string")
+    {
+        const chirpId = req.params.chirpId;
+        console.log(chirpId);
+        const chirp = await getChirp(chirpId);
+        console.log(chirp);
+        if(chirp){
+            res.header("Content-Type", 'application/json');
+            res.status(200).send(chirp);
+        }
+        else {
+            throw errorTypes.NotFoundError;
+        }
+    }
+    else{
+        throw errorTypes.BadRequestError;
+    }
+
+}
 
 export async function handlerUser(req: Request, res:Response) 
 {    
