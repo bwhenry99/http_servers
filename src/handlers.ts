@@ -1,4 +1,4 @@
-import {Request, response, Response} from "express";
+import {Request, Response} from "express";
 import { config } from "./config.js";
 import * as errorTypes from "./errorTypes.js"
 import { createUser, getUser } from "./db/queries/users.js";
@@ -6,6 +6,7 @@ import * as tables from "./db/schema.js";
 import { db } from "./db/index.js";
 import { createChirp, getChirps, getChirp } from "./db/queries/chirps.js";
 import * as auth from "./auth.js"
+import { log } from "node:console";
 
 type returnUser = Omit<tables.NewUser, "hashed_password">
 function scrubPassword(user:tables.NewUser): returnUser
@@ -15,8 +16,21 @@ function scrubPassword(user:tables.NewUser): returnUser
         "email": user.email,
         "createdAt": user.createdAt,
         "updatedAt": user.updatedAt
-    }
+    };
     return retUser;
+}
+
+type tokenUser = returnUser & {token: string};
+function appendToken(user:returnUser, token: string): tokenUser
+{
+    const tokUser: tokenUser = {
+        "id": user.id,
+        "email": user.email,
+        "createdAt": user.createdAt,
+        "updatedAt": user.updatedAt,
+        "token": token
+    };
+    return tokUser;
 }
 
 export const handlerReadiness = (req: Request, res: Response) => 
@@ -52,10 +66,15 @@ export async function handlerAddChirp(req: Request, res:Response)
 {
     type parameters = {
         body: string;
-        userId: string;
     };
 
     const chirp: parameters = req.body;
+
+    const token = auth.getBearerToken(req);
+
+    // validate token
+    const userID = auth.validateJWT(token, config.secret)
+
     if(chirp.body.length > 140)
     {
         throw new errorTypes.BadRequestError("Chirp is too long. Max length is 140");
@@ -73,9 +92,9 @@ export async function handlerAddChirp(req: Request, res:Response)
 
         const clean_body = words.join(" ");
 
-        if(chirp.body && chirp.userId)
+        if(chirp.body && userID)
         {
-            const newChirp: tables.NewChirp = {"body": clean_body, "userId": chirp.userId};
+            const newChirp: tables.NewChirp = {"body": clean_body, "userId": userID};
             const added = await createChirp(newChirp);
             res.header("Content-Type", 'application/json');
             res.status(201).send(added);
@@ -98,9 +117,7 @@ export async function handlerGetChirp(req: Request, res: Response)
     if(typeof(req.params.chirpId) == "string")
     {
         const chirpId = req.params.chirpId;
-        console.log(chirpId);
         const chirp = await getChirp(chirpId);
-        console.log(chirp);
         if(chirp){
             res.header("Content-Type", 'application/json');
             res.status(200).send(chirp);
@@ -112,7 +129,6 @@ export async function handlerGetChirp(req: Request, res: Response)
     else{
         throw errorTypes.BadRequestError;
     }
-
 }
 
 export async function handlerNewUser(req: Request, res:Response) 
@@ -142,9 +158,12 @@ export async function hanlderLogin(req: Request, res:Response)
     type parameters = {
         password: string;
         email: string;
+        expiresInSeconds: 3600;
     };
 
     const login: parameters = req.body;
+    if(login.expiresInSeconds > 3600 || !login.expiresInSeconds)
+        login.expiresInSeconds = 3600;
 
     if(login.email && login.password)
     {
@@ -152,12 +171,13 @@ export async function hanlderLogin(req: Request, res:Response)
         if(!user)
             throw new errorTypes.UnauthorizedError("incorrect email or password");
         
-        const success = await auth.verifyPassword(user["hashed_password"], login.password)
+        const success = await auth.verifyPassword(login.password, user["hashed_password"]);
         if(!success)
             throw new errorTypes.UnauthorizedError("incorrect email or password");
 
+        const token = auth.makeJWT(user.id, login.expiresInSeconds, config.secret);
         res.header("Content-Type", 'application/json');
-        res.status(200).send(scrubPassword(user));
+        res.status(200).send(appendToken(scrubPassword(user), token));
     }
     else{
         throw errorTypes.BadRequestError;

@@ -22,6 +22,16 @@ function platformValidate(): string
     throw Error("NO Platform Defined")
 }
 
+function secretValidate(): string
+{
+    if(process.env.SECRET)
+    {
+        return process.env.SECRET;
+    }
+
+    throw Error("NO Platform Defined")
+}
+
 const migrationConfig: MigrationConfig = {
   migrationsFolder: "./src/db/migrations",
 };
@@ -34,12 +44,14 @@ type DbConfig = {
 type APIConfig = {
     fileserverHits: number;
     platform: string;
+    secret: string;
     dbConfig: DbConfig;
 }
 
 export const config: APIConfig = {
     fileserverHits: 0,
     platform: platformValidate(),
+    secret: secretValidate(),
     dbConfig: {
         dbURL: dbValidate(),
         migrationConfig: migrationConfig
