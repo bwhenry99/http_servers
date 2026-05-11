@@ -35,6 +35,14 @@ app.post("/api/login", (req, res, next) => {
   Promise.resolve(handlers.hanlderLogin(req, res)).catch(next);
 });
 
+app.post("/api/refresh", (req, res, next) => {
+  Promise.resolve(handlers.handlerRefresh(req, res)).catch(next);
+});
+
+app.post("/api/revoke", (req, res, next) => {
+  Promise.resolve(handlers.handlerRevoke(req, res)).catch(next);
+});
+
 app.post("/api/chirps", (req, res, next) => {
   Promise.resolve(handlers.handlerAddChirp(req, res)).catch(next);
 });

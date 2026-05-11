@@ -6,6 +6,7 @@ import * as tables from "./db/schema.js";
 import { db } from "./db/index.js";
 import { createChirp, getChirps, getChirp } from "./db/queries/chirps.js";
 import * as auth from "./auth.js"
+import * as refresh from "./db/queries/refresh.js"
 import { log } from "node:console";
 
 type returnUser = Omit<tables.NewUser, "hashed_password">
@@ -20,15 +21,16 @@ function scrubPassword(user:tables.NewUser): returnUser
     return retUser;
 }
 
-type tokenUser = returnUser & {token: string};
-function appendToken(user:returnUser, token: string): tokenUser
+type tokenUser = returnUser & {token: string, refreshToken: string};
+function appendToken(user:returnUser, token: string, refreshToken: string): tokenUser
 {
     const tokUser: tokenUser = {
         "id": user.id,
         "email": user.email,
         "createdAt": user.createdAt,
         "updatedAt": user.updatedAt,
-        "token": token
+        "token": token,
+        "refreshToken": refreshToken
     };
     return tokUser;
 }
@@ -158,12 +160,9 @@ export async function hanlderLogin(req: Request, res:Response)
     type parameters = {
         password: string;
         email: string;
-        expiresInSeconds: 3600;
     };
 
     const login: parameters = req.body;
-    if(login.expiresInSeconds > 3600 || !login.expiresInSeconds)
-        login.expiresInSeconds = 3600;
 
     if(login.email && login.password)
     {
@@ -175,11 +174,39 @@ export async function hanlderLogin(req: Request, res:Response)
         if(!success)
             throw new errorTypes.UnauthorizedError("incorrect email or password");
 
-        const token = auth.makeJWT(user.id, login.expiresInSeconds, config.secret);
+        const token = auth.makeJWT(user.id, 3600, config.secret);
+        const refreshToken = auth.makeRefreshToken();
+        const newRefresh: tables.NewRefresh = {userId: user.id, token: refreshToken};
+        await refresh.createRefresh(newRefresh)
         res.header("Content-Type", 'application/json');
-        res.status(200).send(appendToken(scrubPassword(user), token));
+        res.status(200).send(appendToken(scrubPassword(user), token, refreshToken));
     }
     else{
         throw errorTypes.BadRequestError;
     }
+}
+
+export async function handlerRefresh(req: Request, res:Response) 
+{
+    const refreshToken = auth.getRefreshToken(req);
+    if(await refresh.verifyToken(refreshToken))
+    {
+        const userId = await refresh.getUserFromToken(refreshToken);
+        const token = auth.makeJWT(userId, 3600, config.secret);
+        res.header("Content-Type", 'application/json');
+        res.status(200).send({token: token});
+    }
+    else{
+        throw new errorTypes.UnauthorizedError("Bad Refresh Token")
+    }
+}
+
+export async function handlerRevoke(req: Request, res:Response)
+{
+    const refreshToken = auth.getRefreshToken(req);
+    if(!await refresh.verifyToken(refreshToken))
+        throw new errorTypes.BadRequestError("Token doesn't exist");
+
+    await refresh.revokeToken(refreshToken);
+    res.status(204).send();
 }

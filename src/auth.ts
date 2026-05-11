@@ -3,6 +3,7 @@ import jwt, { JsonWebTokenError } from "jsonwebtoken";
 import type { JwtPayload } from "jsonwebtoken";
 import { UnauthorizedError } from "./errorTypes.js"
 import { Request } from "express";
+import { randomBytes } from "crypto";
 
 type payload = Pick<JwtPayload, "iss" | "sub" | "iat" | "exp">;
 
@@ -65,4 +66,19 @@ export function getBearerToken(req: Request): string
     throw new UnauthorizedError("No token presented");
   }
   return bearerString.split(' ')[1];
+}
+
+export function makeRefreshToken(): string
+{
+  return randomBytes(32).toString('hex');
+}
+
+export function getRefreshToken(req: Request): string
+{
+  const refreshString = req.get("Authorization");
+  if(!refreshString)
+  {
+    throw new UnauthorizedError("No token presented");
+  }
+  return refreshString.split(' ')[1];
 }
