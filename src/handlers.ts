@@ -4,7 +4,7 @@ import * as errorTypes from "./errorTypes.js"
 import { createUser, getUser, updateUser } from "./db/queries/users.js";
 import * as tables from "./db/schema.js";
 import { db } from "./db/index.js";
-import { createChirp, getChirps, getChirp } from "./db/queries/chirps.js";
+import { createChirp, getChirps, getChirp, deleteChirp } from "./db/queries/chirps.js";
 import * as auth from "./auth.js"
 import * as refresh from "./db/queries/refresh.js"
 import { log } from "node:console";
@@ -121,16 +121,55 @@ export async function handlerGetChirp(req: Request, res: Response)
     {
         const chirpId = req.params.chirpId;
         const chirp = await getChirp(chirpId);
+
         if(chirp){
             res.header("Content-Type", 'application/json');
             res.status(200).send(chirp);
         }
         else {
-            throw errorTypes.NotFoundError;
+            throw new errorTypes.NotFoundError("Chirp not found");
         }
     }
     else{
         throw errorTypes.BadRequestError;
+    }
+}
+
+export async function handlerDeleteChirp(req: Request, res: Response)
+{
+    const token = auth.getBearerToken(req);
+    const userID = auth.validateJWT(token, config.secret)
+
+    if(!req.params.chirpId)
+        throw errorTypes.BadRequestError;
+
+    if(typeof(req.params.chirpId) == "string")
+    {
+
+        const chirpId = req.params.chirpId;
+        let chirpUser = "";
+        try
+        {
+            const chirp = await getChirp(chirpId);
+            chirpUser = chirp.userId;
+        }
+        catch
+        {
+            throw new errorTypes.NotFoundError("Chirp not found");
+        }
+
+
+        if(!(userID == chirpUser))
+        {
+            throw new errorTypes.ForbiddenError("Cannot delete chirp")
+        }
+
+        await deleteChirp(chirpId, userID);
+        res.header("Content-Type", 'application/json');
+        res.status(204).send();
+    }
+    else{
+        throw new errorTypes.BadRequestError("No chirp ID");
     }
 }
 

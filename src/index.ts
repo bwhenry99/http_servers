@@ -59,6 +59,10 @@ app.get("/api/chirps/:chirpId", (req, res, next) => {
   Promise.resolve(handlers.handlerGetChirp(req, res)).catch(next);
 });
 
+app.delete("/api/chirps/:chirpId", (req, res, next) => {
+  Promise.resolve(handlers.handlerDeleteChirp(req, res)).catch(next);
+});
+
 app.use(middlewareError);
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);
