@@ -31,6 +31,10 @@ app.post("/api/users", (req, res, next) => {
   Promise.resolve(handlers.handlerNewUser(req, res)).catch(next);
 });
 
+app.put("/api/users", (req, res, next) => {
+  Promise.resolve(handlers.handlerEditUser(req, res)).catch(next);
+});
+
 app.post("/api/login", (req, res, next) => {
   Promise.resolve(handlers.hanlderLogin(req, res)).catch(next);
 });

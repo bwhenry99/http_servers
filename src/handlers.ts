@@ -1,13 +1,14 @@
 import {Request, Response} from "express";
 import { config } from "./config.js";
 import * as errorTypes from "./errorTypes.js"
-import { createUser, getUser } from "./db/queries/users.js";
+import { createUser, getUser, updateUser } from "./db/queries/users.js";
 import * as tables from "./db/schema.js";
 import { db } from "./db/index.js";
 import { createChirp, getChirps, getChirp } from "./db/queries/chirps.js";
 import * as auth from "./auth.js"
 import * as refresh from "./db/queries/refresh.js"
 import { log } from "node:console";
+import { userInfo } from "node:os";
 
 type returnUser = Omit<tables.NewUser, "hashed_password">
 function scrubPassword(user:tables.NewUser): returnUser
@@ -149,6 +150,30 @@ export async function handlerNewUser(req: Request, res:Response)
         const user = await createUser(usertoAdd)
         res.header("Content-Type", 'application/json');
         res.status(201).send(scrubPassword(user));
+    }
+    else{
+        throw errorTypes.BadRequestError;
+    }
+}
+
+export async function handlerEditUser(req: Request, res:Response) 
+{
+        type parameters = {
+        password: string;
+        email: string;
+    };
+
+    const registration: parameters = req.body;
+    
+    const token = auth.getBearerToken(req);
+    const userID = auth.validateJWT(token, config.secret)
+
+    if(registration.email && registration.password)
+    {
+        const hashed_password = await auth.hashPassword(registration.password);
+        const user = await updateUser(userID, registration.email, hashed_password);
+        res.header("Content-Type", 'application/json');
+        res.status(200).send(scrubPassword(user));
     }
     else{
         throw errorTypes.BadRequestError;
