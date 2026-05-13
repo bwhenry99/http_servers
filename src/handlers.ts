@@ -4,7 +4,7 @@ import * as errorTypes from "./errorTypes.js"
 import { createUser, getUser, updateUser, upgradeUser } from "./db/queries/users.js";
 import * as tables from "./db/schema.js";
 import { db } from "./db/index.js";
-import { createChirp, getChirps, getChirp, deleteChirp, getChirpsByUser } from "./db/queries/chirps.js";
+import { createChirp, getChirps, getChirp, deleteChirp } from "./db/queries/chirps.js";
 import * as auth from "./auth.js"
 import * as refresh from "./db/queries/refresh.js"
 import { log } from "node:console";
@@ -115,15 +115,13 @@ export async function handlerGetChirps(req: Request, res: Response)
         authorId = authorIdQuery;
     }
 
-    let allChirps;
-    if(authorId)
-    {
-        allChirps = await getChirpsByUser(authorId);
-    } 
-    else
-    {
-        allChirps = await getChirps();
+    let sort = "";
+    let sortQ = req.query.sort;
+    if (typeof sortQ === "string") {
+        sort = sortQ;
     }
+
+    const allChirps = await getChirps(authorId, sort);
     res.header("Content-Type", 'application/json');
     res.status(200).send(allChirps);
 }
