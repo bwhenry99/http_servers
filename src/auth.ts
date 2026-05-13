@@ -82,3 +82,14 @@ export function getRefreshToken(req: Request): string
   }
   return refreshString.split(' ')[1];
 }
+
+export function getPolkaToken(req: Request): string
+{
+  const refreshString = req.get("Authorization");
+  if(!refreshString)
+  {
+    throw new UnauthorizedError("No token presented");
+  }
+
+  return refreshString.split(' ')[1];
+}

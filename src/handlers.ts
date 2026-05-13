@@ -4,7 +4,7 @@ import * as errorTypes from "./errorTypes.js"
 import { createUser, getUser, updateUser, upgradeUser } from "./db/queries/users.js";
 import * as tables from "./db/schema.js";
 import { db } from "./db/index.js";
-import { createChirp, getChirps, getChirp, deleteChirp } from "./db/queries/chirps.js";
+import { createChirp, getChirps, getChirp, deleteChirp, getChirpsByUser } from "./db/queries/chirps.js";
 import * as auth from "./auth.js"
 import * as refresh from "./db/queries/refresh.js"
 import { log } from "node:console";
@@ -109,7 +109,21 @@ export async function handlerAddChirp(req: Request, res:Response)
 
 export async function handlerGetChirps(req: Request, res: Response)
 {
-    const allChirps = await getChirps();
+    let authorId = "";
+    let authorIdQuery = req.query.authorId;
+    if (typeof authorIdQuery === "string") {
+        authorId = authorIdQuery;
+    }
+
+    let allChirps;
+    if(authorId)
+    {
+        allChirps = await getChirpsByUser(authorId);
+    } 
+    else
+    {
+        allChirps = await getChirps();
+    }
     res.header("Content-Type", 'application/json');
     res.status(200).send(allChirps);
 }
@@ -229,6 +243,14 @@ export async function handlerUpgradeUser(req: Request, res:Response)
             userId: string;
         }
     };
+
+    const token = auth.getPolkaToken(req);
+    console.log(token);
+    if(!(token == config.polka_key))
+    {
+        res.status(401).send();
+        return;
+    }
 
     const event: parameters = req.body;
     if(!(event.event == "user.upgraded"))

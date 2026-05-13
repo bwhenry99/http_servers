@@ -32,6 +32,16 @@ function secretValidate(): string
     throw Error("NO Platform Defined")
 }
 
+function polkaValidate(): string
+{
+    if(process.env.POLKA_KEY)
+    {
+        return process.env.POLKA_KEY;
+    }
+
+    throw Error("No Polka Key")
+}
+
 const migrationConfig: MigrationConfig = {
   migrationsFolder: "./src/db/migrations",
 };
@@ -45,6 +55,7 @@ type APIConfig = {
     fileserverHits: number;
     platform: string;
     secret: string;
+    polka_key: string;
     dbConfig: DbConfig;
 }
 
@@ -52,6 +63,7 @@ export const config: APIConfig = {
     fileserverHits: 0,
     platform: platformValidate(),
     secret: secretValidate(),
+    polka_key: polkaValidate(),
     dbConfig: {
         dbURL: dbValidate(),
         migrationConfig: migrationConfig
