@@ -1,0 +1,1 @@
+ALTER TABLE "refresh_tokens" ALTER COLUMN "expires_at" SET DEFAULT '2026-07-12 00:28:57.436';

@@ -22,6 +22,20 @@
       "when": 1778471021202,
       "tag": "0002_steep_frog_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778630803000,
+      "tag": "0003_unusual_flatman",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1778632137442,
+      "tag": "0004_narrow_electro",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,7 @@
 import {Request, Response} from "express";
 import { config } from "./config.js";
 import * as errorTypes from "./errorTypes.js"
-import { createUser, getUser, updateUser } from "./db/queries/users.js";
+import { createUser, getUser, updateUser, upgradeUser } from "./db/queries/users.js";
 import * as tables from "./db/schema.js";
 import { db } from "./db/index.js";
 import { createChirp, getChirps, getChirp, deleteChirp } from "./db/queries/chirps.js";
@@ -17,7 +17,8 @@ function scrubPassword(user:tables.NewUser): returnUser
         "id": user.id,
         "email": user.email,
         "createdAt": user.createdAt,
-        "updatedAt": user.updatedAt
+        "updatedAt": user.updatedAt,
+        "isChirpyRed": user.isChirpyRed
     };
     return retUser;
 }
@@ -30,6 +31,7 @@ function appendToken(user:returnUser, token: string, refreshToken: string): toke
         "email": user.email,
         "createdAt": user.createdAt,
         "updatedAt": user.updatedAt,
+        "isChirpyRed": user.isChirpyRed,
         "token": token,
         "refreshToken": refreshToken
     };
@@ -216,6 +218,33 @@ export async function handlerEditUser(req: Request, res:Response)
     }
     else{
         throw errorTypes.BadRequestError;
+    }
+}
+
+export async function handlerUpgradeUser(req: Request, res:Response) 
+{
+    type parameters = {
+        event: string;
+        data: {
+            userId: string;
+        }
+    };
+
+    const event: parameters = req.body;
+    if(!(event.event == "user.upgraded"))
+    {
+        res.status(204).send();
+        return;
+    }
+
+    try
+    {
+        upgradeUser(event.data.userId);
+        res.status(204).send();
+    }
+    catch
+    {
+        throw new errorTypes.NotFoundError("User not found")
     }
 }
 

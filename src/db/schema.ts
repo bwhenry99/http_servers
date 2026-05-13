@@ -1,3 +1,4 @@
+import { boolean } from "drizzle-orm/pg-core";
 import { date } from "drizzle-orm/mysql-core";
 import { pgTable, timestamp, varchar, uuid, PgVarcharBuilder } from "drizzle-orm/pg-core";
 
@@ -10,6 +11,7 @@ export const users = pgTable("users", {
     .$onUpdate(() => new Date()),
   email: varchar("email", { length: 256 }).unique().notNull(),
   hashed_password: varchar("hashed_password").notNull().default('unset'),
+  isChirpyRed: boolean("is_chirpy_red").default(false)
 });
 
 export type NewUser = typeof users.$inferInsert;

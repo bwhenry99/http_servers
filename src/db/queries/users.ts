@@ -26,3 +26,10 @@ export async function updateUser(userID: string, newEmail: string, password: str
       .returning();
     return user;
 }
+
+export async function upgradeUser(userID: string)
+{
+  await db.update(users)
+    .set({isChirpyRed: true})
+    .where(eq(users.id, userID))
+}

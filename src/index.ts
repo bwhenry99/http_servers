@@ -63,6 +63,10 @@ app.delete("/api/chirps/:chirpId", (req, res, next) => {
   Promise.resolve(handlers.handlerDeleteChirp(req, res)).catch(next);
 });
 
+app.post("/api/polka/webhooks", (req, res, next) => {
+  Promise.resolve(handlers.handlerUpgradeUser(req, res)).catch(next);
+});
+
 app.use(middlewareError);
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);
